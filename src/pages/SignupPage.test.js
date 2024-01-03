@@ -73,6 +73,15 @@ describe("SignupPage", () => {
     });
 
     it("sends username, email and password to backend after clicking the button", async () => {
+      let requestBody;
+      const server = setupServer(
+        rest.post("/api/1.0/users", (req, res, ctx) => {
+          requestBody = req.body
+          return res(ctx.status(201))
+        })
+      );
+      server.listen();
+
       render(<SignupPage />);
       const usernameInput = screen.queryByLabelText("Username");
       const emailInput = screen.queryByLabelText("E-mail");
@@ -84,10 +93,9 @@ describe("SignupPage", () => {
       userEvent.type(passwordRepeatInput, "P4ssword");
       const button = screen.queryByRole("button", { name: "Sign Up" });
 
-      const mockFn = jest.fn();
-      window.fetch = mockFn;
-
       userEvent.click(button);
+
+      await new Promise(resolve => setTimeout(resolve, 500));
 
       const firstCallOfMockFunction = mockFn.mock.calls[0];
       const body = JSON.parse(firstCallOfMockFunction[1].body);

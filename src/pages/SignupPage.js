@@ -24,7 +24,7 @@ class SignupPage extends Component {
       email,
       password,
     }
-    
+
     fetch("/api/1.0/users", {
       method: "POST",
       headers: {
@@ -42,24 +42,38 @@ class SignupPage extends Component {
     }
 
     return (
-      <>
-        <form>
-          <h1>Sign Up</h1>
-          <label htmlFor="username">Username</label>
-          <input id="username" onChange={this.onChange} />
+      <div className="col-lg-6 offset-lg-3 col-md-8 offset-md-2">
+        <form className="card mt-5">
+          <div className="card-header">
+            <h1 className="text-center">Sign Up</h1>
+          </div>
+          <div className="card-body">
+            <div className="mb-3">
+              <label htmlFor="username" className="form-label">Username</label>
+              <input id="username" onChange={this.onChange} className="form-control" />
+            </div>
 
-          <label htmlFor="email">E-mail</label>
-          <input id="email" onChange={this.onChange} />
+            <div className="mb-3">
+              <label htmlFor="email" className="form-label">E-mail</label>
+              <input id="email" onChange={this.onChange} className="form-control" />
+            </div>
 
-          <label htmlFor="password">Password</label>
-          <input id="password" type="password" onChange={this.onChange} />
+            <div className="mb-3">
+              <label htmlFor="password" className="form-label">Password</label>
+              <input id="password" type="password" onChange={this.onChange} className="form-control" />
+            </div>
 
-          <label htmlFor="password-repeat">Password Repeat</label>
-          <input id="password-repeat" type="password" onChange={this.onChange} />
+            <div className="mb-3">
+              <label htmlFor="password-repeat" className="form-label">Password Repeat</label>
+              <input id="password-repeat" type="password" onChange={this.onChange} className="form-control" />
+            </div>
 
-          <button disabled={disabled} onClick={this.submit}>Sign Up</button>
+            <div className="text-center">
+              <button disabled={disabled} onClick={this.submit} className="btn btn-primary">Sign Up</button>
+            </div>
+          </div>
         </form>
-      </>
+      </div>
     );
   };
 };
