@@ -1,6 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import SignupPage from "./SignupPage";
 import userEvent from "@testing-library/user-event";
+import { setupServer } from "msw/node";
+import { rest } from "msw";
 
 describe("SignupPage", () => {
   describe("Layout", () => {
@@ -68,6 +70,32 @@ describe("SignupPage", () => {
       userEvent.type(passwordRepeatInput, "P4ssword");
       const button = screen.queryByRole("button", { name: "Sign Up" });
       expect(button).toBeEnabled();
+    });
+
+    it("sends username, email and password to backend after clicking the button", async () => {
+      render(<SignupPage />);
+      const usernameInput = screen.queryByLabelText("Username");
+      const emailInput = screen.queryByLabelText("E-mail");
+      const passwordInput = screen.queryByLabelText("Password");
+      const passwordRepeatInput = screen.queryByLabelText("Password Repeat");
+      userEvent.type(usernameInput, "User");
+      userEvent.type(emailInput, "user@user.com");
+      userEvent.type(passwordInput, "P4ssword");
+      userEvent.type(passwordRepeatInput, "P4ssword");
+      const button = screen.queryByRole("button", { name: "Sign Up" });
+
+      const mockFn = jest.fn();
+      window.fetch = mockFn;
+
+      userEvent.click(button);
+
+      const firstCallOfMockFunction = mockFn.mock.calls[0];
+      const body = JSON.parse(firstCallOfMockFunction[1].body);
+      expect(body).toEqual({
+        username: "User",
+        email: "user@user.com",
+        password: "P4ssword",
+      });
     });
   });
 });
