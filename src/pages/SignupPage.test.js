@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import SignupPage from "./SignupPage";
 import userEvent from "@testing-library/user-event";
 import { setupServer } from "msw/node";
@@ -62,13 +62,23 @@ describe("SignupPage", () => {
   });
 
   describe("Interactions", () => {
-    it("enables the button when password and password repeat have same value", () => {
-      render(<SignupPage />);
+
+    let button;
+
+    const setup = () => {
+      const usernameInput = screen.queryByLabelText("Username");
+      const emailInput = screen.queryByLabelText("E-mail");
       const passwordInput = screen.queryByLabelText("Password");
       const passwordRepeatInput = screen.queryByLabelText("Password Repeat");
+      userEvent.type(usernameInput, "User");
+      userEvent.type(emailInput, "user@user.com");
       userEvent.type(passwordInput, "P4ssword");
       userEvent.type(passwordRepeatInput, "P4ssword");
-      const button = screen.queryByRole("button", { name: "Sign Up" });
+      button = screen.queryByRole("button", { name: "Sign Up" });
+    }
+
+    it("enables the button when password and password repeat have same value", () => {
+      setup();
       expect(button).toBeEnabled();
     });
 
@@ -82,20 +92,11 @@ describe("SignupPage", () => {
       );
       server.listen();
 
-      render(<SignupPage />);
-      const usernameInput = screen.queryByLabelText("Username");
-      const emailInput = screen.queryByLabelText("E-mail");
-      const passwordInput = screen.queryByLabelText("Password");
-      const passwordRepeatInput = screen.queryByLabelText("Password Repeat");
-      userEvent.type(usernameInput, "User");
-      userEvent.type(emailInput, "user@user.com");
-      userEvent.type(passwordInput, "P4ssword");
-      userEvent.type(passwordRepeatInput, "P4ssword");
-      const button = screen.queryByRole("button", { name: "Sign Up" });
+      setup();
 
       userEvent.click(button);
 
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await screen.findByText("Please check your e-mail to activate your account");
 
       const firstCallOfMockFunction = mockFn.mock.calls[0];
       const body = JSON.parse(firstCallOfMockFunction[1].body);
@@ -105,5 +106,84 @@ describe("SignupPage", () => {
         password: "P4ssword",
       });
     });
+
+    it("disables button when there is an ongoing API call", async () => {
+      let counter = 0;
+      let requestBody;
+      const server = setupServer(
+        rest.post("/api/1.0/users", (req, res, ctx) => {
+          counter += 1;
+          requestBody = req.body
+          return res(ctx.status(201))
+        })
+      );
+      server.listen();
+
+      setup();
+
+      userEvent.click(button);
+      userEvent.click(button);
+
+      await screen.findByText("Please check your e-mail to activate your account");
+
+      expect(counter).toBe(1);
+    });
+
+    ("displays spinner after clicking submit button", async () => {
+      let requestBody;
+      const server = setupServer(
+        rest.post("/api/1.0/users", (req, res, ctx) => {
+          requestBody = req.body
+          return res(ctx.status(201))
+        })
+      );
+      server.listen();
+
+      setup();
+
+      expect(screen.queryByRole("status", { hidden: true })).not.toBeInTheDocument();
+      userEvent.click(button);
+      const spinner = screen.getByRole("status", { hidden: true });
+
+      expect(spinner).toBeInTheDocument();
+      await screen.findByText("Please check your e-mail to activate your account");
+    });
+
+    it("displays account activation notification after successful sign up request", async () => {
+      let requestBody;
+      const server = setupServer(
+        rest.post("/api/1.0/users", (req, res, ctx) => {
+          requestBody = req.body
+          return res(ctx.status(201))
+        })
+      );
+      server.listen();
+      setup();
+
+      const message = "Please check your e-mail to activate your account";
+      expect(message).not.toBeInTheDocument();
+
+      userEvent.click(button);
+      const text = await screen.findByText(message);
+
+      expect(text).toBeInTheDocument();
+    });
+
+    it("hides sign up form after successful sign up request", async () => {
+      const server = setupServer(
+        rest.post("/api/1.0/users", (req, res, ctx) => {
+          return res(ctx.status(201))
+        })
+      );
+      server.listen();
+      setup();
+
+      const form = screen.getByTestId("form-signup");
+      userEvent.click(button);
+
+      await waitFor(() => {
+        expect(form).not.toBeInTheDocument();
+      })
+    })
   });
 });
