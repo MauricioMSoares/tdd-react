@@ -1,0 +1,8 @@
+{
+  "signup": "サインアップ",
+  "username": "ユーザー名",
+  "email": "メールアドレス",
+  "password": "パスワード",
+  "passwordRepeat": "パスワード再入力",
+  "passwordMismatchValidation": "パスワードが一致しません"
+}

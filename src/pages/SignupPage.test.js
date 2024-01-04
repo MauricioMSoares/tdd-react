@@ -1,8 +1,32 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor, waitForElementToBeRemoved } from "@testing-library/react";
 import SignupPage from "./SignupPage";
 import userEvent from "@testing-library/user-event";
 import { setupServer } from "msw/node";
 import { rest } from "msw";
+import "../locale/i18n";
+import en from "../locale/en.json";
+import ja from "../locale/ja.json";
+import LanguageSelector from "../components/LanguageSelector";
+import i18n from "../locale/i18n";
+
+let counter = 0;
+let requestBody;
+let acceptLanguageHeader;
+const server = setupServer(
+  rest.post("/api/1.0/users", (req, res, ctx) => {
+    requestBody = req.body
+    counter += 1;
+    acceptLanguageHeader = req.headers.get("Accept-Language");
+    return res(ctx.status(201))
+  })
+);
+
+beforeEach(() => {
+  counter = 0
+  server.resetHandlers();
+});
+beforeAll(() => server.listen());
+afterAll(() => server.close());
 
 describe("SignupPage", () => {
   describe("Layout", () => {
@@ -62,23 +86,6 @@ describe("SignupPage", () => {
   });
 
   describe("Interactions", () => {
-    let counter = 0;
-    let requestBody;
-    const server = setupServer(
-      rest.post("/api/1.0/users", (req, res, ctx) => {
-        requestBody = req.body
-        counter += 1;
-        return res(ctx.status(201))
-      })
-    );
-
-    beforeEach(() => {
-      counter = 0
-      server.resetHandlers();
-    });
-    beforeAll(() => server.listen());
-    afterAll(() => server.close());
-
     let button, usernameInput, emailInput, passwordInput, passwordRepeatInput;
 
     const setup = () => {
@@ -128,9 +135,9 @@ describe("SignupPage", () => {
     ("displays spinner after clicking submit button", async () => {
       setup();
 
-      expect(screen.queryByRole("status", { hidden: true })).not.toBeInTheDocument();
+      expect(screen.queryByRole("status")).not.toBeInTheDocument();
       userEvent.click(button);
-      const spinner = screen.getByRole("status", { hidden: true });
+      const spinner = screen.getByRole("status");
 
       expect(spinner).toBeInTheDocument();
       await screen.findByText("Please check your e-mail to activate your account");
@@ -191,7 +198,7 @@ describe("SignupPage", () => {
       setup();
       userEvent.click(button);
 
-      expect(screen.queryByRole("status", { hidden: true })).not.toBeInTheDocument();
+      expect(screen.queryByRole("status")).not.toBeInTheDocument();
       expect(button).toBeEnabled();
     });
 
@@ -215,6 +222,141 @@ describe("SignupPage", () => {
       const validationError = await screen.findByText(message);
       userEvent.type(screen.getByLabelText(label), "updated");
       expect(validationError).not.toBeInTheDocument();
+    });
+  });
+
+  describe("Internationalization", () => {
+    let japaneseToggle, englishToggle, passwordInput, passwordRepeatInput;
+    const setup = () => {
+      render(
+        <>
+          <SignupPage />
+          <LanguageSelector />
+        </>
+      );
+      japaneseToggle = screen.getByTitle("日本語");
+      englishToggle = screen.getByTitle("English");
+      passwordInput = screen.getByLabelText("Password");
+      passwordRepeatInput = screen.getByLabelText("Password Repeat");
+    };
+
+    afterEach(() => {
+      act(() => {
+        i18n.changeLanguage("en");
+      });
+    });
+
+    it("initially displays all text in English", () => {
+      setup();
+
+      const header = screen.queryByRole("heading", { name: en.signup });
+      expect(header).toBeInTheDocument();
+
+      const button = screen.queryByRole("button", { name: en.signup });
+      expect(button).toBeInTheDocument();
+
+      const usernameLabel = screen.queryByLabelText(en.username);
+      expect(usernameLabel).toBeInTheDocument();
+
+      const emailLabel = screen.queryByLabelText(en.email);
+      expect(emailLabel).toBeInTheDocument();
+
+      const passwordLabel = screen.queryByLabelText(en.password);
+      expect(passwordLabel).toBeInTheDocument();
+
+      const passwordRepeatLabel = screen.queryByLabelText(en.passwordRepeat);
+      expect(passwordRepeatLabel).toBeInTheDocument();
+    });
+
+    it("displays all text in Japanese after changing the language", () => {
+      setup();
+
+      userEvent.click(japaneseToggle);
+
+      const header = screen.queryByRole("heading", { name: ja.signup });
+      expect(header).toBeInTheDocument();
+
+      const button = screen.queryByRole("button", { name: ja.signup });
+      expect(button).toBeInTheDocument();
+
+      const usernameLabel = screen.queryByLabelText(ja.username);
+      expect(usernameLabel).toBeInTheDocument();
+
+      const emailLabel = screen.queryByLabelText(ja.email);
+      expect(emailLabel).toBeInTheDocument();
+
+      const passwordLabel = screen.queryByLabelText(ja.password);
+      expect(passwordLabel).toBeInTheDocument();
+
+      const passwordRepeatLabel = screen.queryByLabelText(ja.passwordRepeat);
+      expect(passwordRepeatLabel).toBeInTheDocument();
+    });
+
+    it("displays all text in English after changing back from Japanese", () => {
+      setup();
+
+      userEvent.click(japaneseToggle);
+      userEvent.click(englishToggle);
+
+      const header = screen.queryByRole("heading", { name: en.signup });
+      expect(header).toBeInTheDocument();
+
+      const button = screen.queryByRole("button", { name: en.signup });
+      expect(button).toBeInTheDocument();
+
+      const usernameLabel = screen.queryByLabelText(en.username);
+      expect(usernameLabel).toBeInTheDocument();
+
+      const emailLabel = screen.queryByLabelText(en.email);
+      expect(emailLabel).toBeInTheDocument();
+
+      const passwordLabel = screen.queryByLabelText(en.password);
+      expect(passwordLabel).toBeInTheDocument();
+
+      const passwordRepeatLabel = screen.queryByLabelText(en.passwordRepeat);
+      expect(passwordRepeatLabel).toBeInTheDocument();
+    });
+
+    it("displays password mismatch validation in Japanese", () => {
+      setup();
+
+      userEvent.click(japaneseToggle);
+
+      const passwordInput = screen.getByLabelText(ja.password);
+      userEvent.type(passwordInput, "P4ss");
+
+      const validationMessageInJapanese = screen.queryByText(ja.passwordMismatch);
+      expect(validationMessageInJapanese).toBeInTheDocument();
+    });
+
+    it("sends accept language header as en for outgoing request", async () => {
+      setup();
+
+      userEvent.type(passwordInput, "P4ssword");
+      userEvent.type(passwordRepeatInput, "P4ssword");
+
+      const button = screen.queryByRole("button", { name: en.signup });
+      const form = screen.queryByTestId("form-signup");
+      userEvent.click(button);
+      await waitForElementToBeRemoved(form);
+
+      expect(acceptLanguageHeader).toBe("en");
+    });
+
+    it("sends accept language header as ja for outgoing request", async () => {
+      setup();
+
+      userEvent.type(passwordInput, "P4ssword");
+      userEvent.type(passwordRepeatInput, "P4ssword");
+      userEvent.click(japaneseToggle);
+
+      const button = screen.queryByRole("button", { name: ja.signup });
+      const form = screen.queryByTestId("form-signup");
+
+      userEvent.click(button);
+      await waitForElementToBeRemoved(form);
+
+      expect(acceptLanguageHeader).toBe("ja");
     });
   });
 });
