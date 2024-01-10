@@ -1,5 +1,8 @@
 {
   "signup": "サインアップ",
+  "login": "ログイン",
+  "home": "ホーム",
+  "profile": "プロフィール",
   "username": "ユーザー名",
   "email": "メールアドレス",
   "password": "パスワード",
