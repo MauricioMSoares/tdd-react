@@ -81,7 +81,7 @@ class SignupPage extends Component {
         }
         {
           signupSuccess &&
-          <div class="alert alert-success mt-3">Please check your e-mail to activate your account</div>
+          <div class="alert alert-success mt-3">{t("checkEmailMessage")}</div>
         }
       </div>
     );

@@ -10,3 +10,7 @@ export const signup = (body) => {
     body: JSON.stringify(body),
   });
 };
+
+export const activate = (token) => {
+  return axios.post("/api/1.0/users/token/" + token);
+};

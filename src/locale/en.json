@@ -7,5 +7,8 @@
   "email": "E-mail",
   "password": "Password",
   "passwordRepeat": "Password Repeat",
-  "passwordMismatchValidation": "The passwords don't match"
+  "passwordMismatchValidation": "The passwords don't match",
+  "checkEmailMessage": "Please check your e-mail to activate your account",
+  "activatedAccount": "Your account has been activated!",
+  "failedToActivateAccount": "Failed to activate account."
 }

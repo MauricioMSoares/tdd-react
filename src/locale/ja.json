@@ -7,5 +7,8 @@
   "email": "メールアドレス",
   "password": "パスワード",
   "passwordRepeat": "パスワード再入力",
-  "passwordMismatchValidation": "パスワードが一致しません"
+  "passwordMismatchValidation": "パスワードが一致しません",
+  "checkEmailMessage": "メールを確認してください",
+  "activatedAccount": "アカウントを有効にしました",
+  "failedToActivate": "アカウントの有効化に失敗しました"
 }
